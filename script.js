@@ -30,6 +30,9 @@ function displayTasks(tasks) {
             <img src="${task.image_url}" alt="Imagen" width="50">
             <span>${task.task}</span>
             <input type="checkbox" ${task.checked ? 'checked' : ''} onclick="toggleTask(${task.id})">
+            <button onclick="deleteTask(${task.id})" style="background: none; border: none; cursor: pointer;">
+                🗑️
+            </button>
         `;
         taskList.appendChild(li);
     });
@@ -94,10 +97,7 @@ async function toggleTask(taskId) {
         });
         let tasks = response.data.record.tasks;
 
-        // Filtrar tareas para eliminar las que están marcadas como "checked"
-        tasks = tasks.filter(t => !(t.id === taskId && t.checked));
-
-        // Si la tarea está desmarcada, solo cambiar su estado
+        // Encontrar la tarea y cambiar su estado
         const task = tasks.find(t => t.id === taskId);
         if (task) {
             task.checked = !task.checked;
@@ -112,5 +112,28 @@ async function toggleTask(taskId) {
         loadTasks();
     } catch (error) {
         console.error('Error al cambiar el estado de la tarea:', error);
+    }
+}
+
+// Función para eliminar una tarea
+async function deleteTask(taskId) {
+    try {
+        const response = await axios.get(`https://api.jsonbin.io/v3/b/${binId}`, {
+            headers: { 'X-Master-Key': apiKey }
+        });
+        let tasks = response.data.record.tasks;
+
+        // Filtrar la tarea que debe eliminarse
+        tasks = tasks.filter(t => t.id !== taskId);
+
+        // Guardar las tareas actualizadas en JSONBin
+        await axios.put(`https://api.jsonbin.io/v3/b/${binId}`, { tasks }, {
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': apiKey }
+        });
+
+        // Recargar la lista de tareas
+        loadTasks();
+    } catch (error) {
+        console.error('Error al eliminar la tarea:', error);
     }
 }
