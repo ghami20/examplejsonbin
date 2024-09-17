@@ -86,19 +86,24 @@ async function addTask() {
     }
 }
 
-// Función para marcar/desmarcar tareas
+// Función para marcar/desmarcar tareas y eliminar si está "checked"
 async function toggleTask(taskId) {
     try {
         const response = await axios.get(`https://api.jsonbin.io/v3/b/${binId}`, {
             headers: { 'X-Master-Key': apiKey }
         });
-        const tasks = response.data.record.tasks;
+        let tasks = response.data.record.tasks;
 
-        // Encontrar la tarea y cambiar su estado
+        // Filtrar tareas para eliminar las que están marcadas como "checked"
+        tasks = tasks.filter(t => !(t.id === taskId && t.checked));
+
+        // Si la tarea está desmarcada, solo cambiar su estado
         const task = tasks.find(t => t.id === taskId);
-        task.checked = !task.checked;
+        if (task) {
+            task.checked = !task.checked;
+        }
 
-        // Guardar las tareas actualizadas
+        // Guardar las tareas actualizadas en JSONBin
         await axios.put(`https://api.jsonbin.io/v3/b/${binId}`, { tasks }, {
             headers: { 'Content-Type': 'application/json', 'X-Master-Key': apiKey }
         });
